@@ -3,6 +3,7 @@ import axios from 'axios';
 import './App.css';
 import JobForm from './components/JobForm';
 import JobBoard from './components/JobBoard';
+import AITools from './components/AITools';
 
 const API_URL = 'http://localhost:8080/api/applications';
 
@@ -10,6 +11,7 @@ function App() {
   const [applications, setApplications] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
+  const [aiApp, setAiApp] = useState(null);
 
   useEffect(() => {
     fetchApplications();
@@ -124,11 +126,16 @@ function App() {
         />
       )}
 
+      {aiApp && (
+        <AITools app={aiApp} onClose={() => setAiApp(null)} />
+      )}
+
       <JobBoard
         applications={applications}
         onUpdateStatus={updateStatus}
         onEdit={handleEdit}
         onDelete={deleteApplication}
+        onAI={setAiApp}
       />
     </div>
   );

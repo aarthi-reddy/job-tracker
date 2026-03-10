@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiEdit2, FiTrash2, FiExternalLink } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiExternalLink, FiCpu } from 'react-icons/fi';
 
 const COLUMNS = [
   { status: 'APPLIED', label: 'Applied', color: '#3b82f6' },
@@ -10,7 +10,7 @@ const COLUMNS = [
   { status: 'REJECTED', label: 'Rejected', color: '#ef4444' },
 ];
 
-function JobBoard({ applications, onUpdateStatus, onEdit, onDelete }) {
+function JobBoard({ applications, onUpdateStatus, onEdit, onDelete, onAI }) {
   return (
     <div className="board">
       {COLUMNS.map(col => {
@@ -27,6 +27,9 @@ function JobBoard({ applications, onUpdateStatus, onEdit, onDelete }) {
                   <div className="card-header">
                     <h4>{app.company}</h4>
                     <div className="card-actions">
+                      <button className="icon-btn ai" onClick={() => onAI(app)} title="AI Tools">
+                        <FiCpu />
+                      </button>
                       {app.jobUrl && (
                         <a href={app.jobUrl} target="_blank" rel="noreferrer" className="icon-btn">
                           <FiExternalLink />
