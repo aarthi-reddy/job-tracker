@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: jobtracker-db
+    environment:
+      POSTGRES_DB: jobtracker
+      POSTGRES_USER: aarthireddy
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: jobtracker-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jobtracker
+      SPRING_DATASOURCE_USERNAME: aarthireddy
+      SPRING_DATASOURCE_PASSWORD: password123
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
