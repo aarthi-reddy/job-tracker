@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class JobApplicationService {
 
     private final JobApplicationRepository repository;
+    private final EmailService emailService;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public JobApplicationResponse createApplication(JobApplicationRequest request) {
@@ -31,6 +32,7 @@ public class JobApplicationService {
         }
 
         JobApplication saved = repository.save(app);
+        emailService.sendNewApplicationEmail(saved.getCompany(), saved.getRole());
         return mapToResponse(saved);
     }
 
@@ -51,6 +53,8 @@ public class JobApplicationService {
         JobApplication app = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found with id: " + id));
 
+        String oldStatus = app.getStatus();
+
         if (request.getCompany() != null) app.setCompany(request.getCompany());
         if (request.getRole() != null) app.setRole(request.getRole());
         if (request.getStatus() != null) app.setStatus(request.getStatus());
@@ -58,6 +62,11 @@ public class JobApplicationService {
         if (request.getNotes() != null) app.setNotes(request.getNotes());
 
         JobApplication saved = repository.save(app);
+
+        if (request.getStatus() != null && !oldStatus.equals(saved.getStatus())) {
+            emailService.sendStatusUpdateEmail(saved.getCompany(), saved.getRole(), oldStatus, saved.getStatus());
+        }
+
         return mapToResponse(saved);
     }
 
