@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { FiMessageSquare, FiFileText, FiHelpCircle, FiX, FiLoader } from 'react-icons/fi';
+import { FiMessageSquare, FiFileText, FiHelpCircle, FiX, FiUpload } from 'react-icons/fi';
 
 const AI_URL = 'http://localhost:8080/api/ai';
 
@@ -9,6 +9,7 @@ function AITools({ app, onClose }) {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [resumeText, setResumeText] = useState('');
+  const [resumeFile, setResumeFile] = useState(null);
 
   const getInterviewQuestions = async () => {
     setLoading(true);
@@ -26,15 +27,22 @@ function AITools({ app, onClose }) {
   };
 
   const getResumeFeedback = async () => {
-    if (!resumeText.trim()) return;
     setLoading(true);
     setResult('');
     try {
-      const response = await axios.post(`${AI_URL}/resume-feedback`, {
-        resumeText: resumeText,
-        targetRole: app.role,
-      });
-      setResult(response.data.feedback);
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        formData.append('targetRole', app.role);
+        const response = await axios.post(`${AI_URL}/upload-resume`, formData);
+        setResult(response.data.feedback);
+      } else if (resumeText.trim()) {
+        const response = await axios.post(`${AI_URL}/resume-feedback`, {
+          resumeText: resumeText,
+          targetRole: app.role,
+        });
+        setResult(response.data.feedback);
+      }
     } catch (error) {
       setResult('Error getting feedback. Please try again.');
     }
@@ -42,20 +50,36 @@ function AITools({ app, onClose }) {
   };
 
   const getCoverLetter = async () => {
-    if (!resumeText.trim()) return;
     setLoading(true);
     setResult('');
     try {
-      const response = await axios.post(`${AI_URL}/cover-letter`, {
-        company: app.company,
-        role: app.role,
-        resumeText: resumeText,
-      });
-      setResult(response.data.coverLetter);
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        formData.append('company', app.company);
+        formData.append('role', app.role);
+        const response = await axios.post(`${AI_URL}/upload-resume-cover-letter`, formData);
+        setResult(response.data.coverLetter);
+      } else if (resumeText.trim()) {
+        const response = await axios.post(`${AI_URL}/cover-letter`, {
+          company: app.company,
+          role: app.role,
+          resumeText: resumeText,
+        });
+        setResult(response.data.coverLetter);
+      }
     } catch (error) {
       setResult('Error generating cover letter. Please try again.');
     }
     setLoading(false);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setResumeFile(file);
+      setResumeText('');
+    }
   };
 
   const formatResult = (text) => {
@@ -117,46 +141,55 @@ function AITools({ app, onClose }) {
             </div>
           )}
 
-          {activeTab === 'resume' && (
+          {(activeTab === 'resume' || activeTab === 'cover') && (
             <div>
               <p className="ai-description">
-                Paste your resume text below to get AI feedback tailored for the {app.role} role.
+                {activeTab === 'resume'
+                  ? `Upload your resume PDF or paste text to get AI feedback for the ${app.role} role.`
+                  : `Generate a custom cover letter for ${app.company}. Upload your resume for personalization.`}
               </p>
-              <textarea
-                className="ai-textarea"
-                value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
-                placeholder="Paste your resume text here..."
-                rows={6}
-              />
-              <button
-                className="ai-generate-btn"
-                onClick={getResumeFeedback}
-                disabled={loading || !resumeText.trim()}
-              >
-                {loading ? 'Analyzing...' : 'Get Resume Feedback'}
-              </button>
-            </div>
-          )}
 
-          {activeTab === 'cover' && (
-            <div>
-              <p className="ai-description">
-                Generate a custom cover letter for {app.company}. Paste your resume for personalization.
-              </p>
-              <textarea
-                className="ai-textarea"
-                value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
-                placeholder="Paste your resume text here..."
-                rows={6}
-              />
+              <div className="upload-section">
+                <label className="file-upload-btn">
+                  <FiUpload /> {resumeFile ? resumeFile.name : 'Upload Resume PDF'}
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                {resumeFile && (
+                  <button className="clear-file" onClick={() => setResumeFile(null)}>
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {!resumeFile && (
+                <div className="or-divider">
+                  <span>or paste resume text</span>
+                </div>
+              )}
+
+              {!resumeFile && (
+                <textarea
+                  className="ai-textarea"
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  placeholder="Paste your resume text here..."
+                  rows={6}
+                />
+              )}
+
               <button
                 className="ai-generate-btn"
-                onClick={getCoverLetter}
-                disabled={loading || !resumeText.trim()}
+                onClick={activeTab === 'resume' ? getResumeFeedback : getCoverLetter}
+                disabled={loading || (!resumeFile && !resumeText.trim())}
               >
-                {loading ? 'Writing...' : 'Generate Cover Letter'}
+                {loading
+                  ? (activeTab === 'resume' ? 'Analyzing...' : 'Writing...')
+                  : (activeTab === 'resume' ? 'Get Resume Feedback' : 'Generate Cover Letter')}
               </button>
             </div>
           )}
