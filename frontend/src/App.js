@@ -4,14 +4,19 @@ import './App.css';
 import JobForm from './components/JobForm';
 import JobBoard from './components/JobBoard';
 import AITools from './components/AITools';
+import { FiZap } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:8080/api/applications';
+const AI_URL = 'http://localhost:8080/api/ai';
 
 function App() {
   const [applications, setApplications] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
   const [aiApp, setAiApp] = useState(null);
+  const [showSmartAdd, setShowSmartAdd] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
+  const [smartLoading, setSmartLoading] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -75,6 +80,38 @@ function App() {
     setEditingApp(null);
   };
 
+  const handleSmartAdd = async () => {
+      if (!jobDescription.trim()) return;
+      setSmartLoading(true);
+      try {
+        let response;
+        const input = jobDescription.trim();
+
+        if (input.startsWith('http://') || input.startsWith('https://')) {
+          response = await axios.post(`${AI_URL}/extract-job-url`, { url: input });
+        } else {
+          response = await axios.post(`${AI_URL}/extract-job`, { jobDescription: input });
+        }
+
+        const cleanResult = response.data.result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanResult);
+        setEditingApp({
+          company: parsed.company || '',
+          role: parsed.role || '',
+          notes: parsed.notes || '',
+          status: 'APPLIED',
+          jobUrl: input.startsWith('http') ? input : '',
+        });
+        setShowSmartAdd(false);
+        setJobDescription('');
+        setShowForm(true);
+      } catch (error) {
+        console.error('Error parsing job:', error);
+        alert('Could not parse job details. Please try again or add manually.');
+      }
+      setSmartLoading(false);
+    };
+
   const stats = {
     total: applications.length,
     applied: applications.filter(a => a.status === 'APPLIED').length,
@@ -90,9 +127,14 @@ function App() {
           <h1>JobTracker</h1>
           <p className="subtitle">AI-Powered Job Application Tracker</p>
         </div>
-        <button className="add-btn" onClick={() => setShowForm(true)}>
-          + Add Application
-        </button>
+        <div className="header-buttons">
+          <button className="smart-add-btn" onClick={() => setShowSmartAdd(true)}>
+            <FiZap /> Smart Add
+          </button>
+          <button className="add-btn" onClick={() => setShowForm(true)}>
+            + Add Application
+          </button>
+        </div>
       </header>
 
       <div className="stats-bar">
@@ -118,9 +160,39 @@ function App() {
         </div>
       </div>
 
+      {showSmartAdd && (
+        <div className="modal-overlay" onClick={() => setShowSmartAdd(false)}>
+          <div className="smart-add-modal" onClick={(e) => e.stopPropagation()}>
+            <h2><FiZap /> Smart Add</h2>
+            <p className="smart-add-description">
+              Paste a job URL or job description and AI will extract the details for you.
+            </p>
+            <textarea
+              className="smart-add-textarea"
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste a job URL or description... (e.g. https://careers.google.com/jobs/... or copy the job text)"
+              rows={10}
+            />
+            <div className="smart-add-actions">
+              <button className="cancel-btn" onClick={() => setShowSmartAdd(false)}>
+                Cancel
+              </button>
+              <button
+                className="ai-generate-btn"
+                onClick={handleSmartAdd}
+                disabled={smartLoading || !jobDescription.trim()}
+              >
+                {smartLoading ? 'Extracting...' : 'Extract & Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <JobForm
-          onSubmit={editingApp ? (app) => updateApplication(editingApp.id, app) : addApplication}
+          onSubmit={editingApp && editingApp.id ? (app) => updateApplication(editingApp.id, app) : addApplication}
           onClose={handleCloseForm}
           initialData={editingApp}
         />

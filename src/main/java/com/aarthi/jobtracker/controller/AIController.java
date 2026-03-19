@@ -69,4 +69,16 @@ public class AIController {
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to process resume: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/extract-job")
+    public ResponseEntity<Map<String, String>> extractJob(@RequestBody Map<String, String> request) {
+        String result = aiService.extractJobDetails(request.get("jobDescription"));
+        return ResponseEntity.ok(Map.of("result", result));
+    }
+
+    @PostMapping("/extract-job-url")
+    public ResponseEntity<Map<String, String>> extractJobFromUrl(@RequestBody Map<String, String> request) {
+        String result = aiService.fetchAndExtractJob(request.get("url"));
+        return ResponseEntity.ok(Map.of("result", result));
+    }
 }

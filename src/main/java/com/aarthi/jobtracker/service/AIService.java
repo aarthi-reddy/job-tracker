@@ -77,4 +77,67 @@ public class AIService {
 
         return callAI(prompt);
     }
+
+    public String extractJobDetails(String jobDescription) {
+        String prompt = "Extract the following from this job posting and return ONLY a JSON object with no extra text:\n"
+                + "{\n"
+                + "  \"company\": \"company name\",\n"
+                + "  \"role\": \"job title\",\n"
+                + "  \"notes\": \"brief 2-3 sentence summary of key requirements\"\n"
+                + "}\n\n"
+                + "Job posting:\n" + jobDescription;
+
+        Map<String, Object> requestBody = Map.of(
+                "model", "llama-3.3-70b-versatile",
+                "max_tokens", 500,
+                "messages", List.of(Map.of("role", "user", "content", prompt))
+        );
+
+        try {
+            String response = groqWebClient.post()
+                    .uri("/openai/v1/chat/completions")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response);
+            return root.path("choices").get(0).path("message").path("content").asText();
+        } catch (Exception e) {
+            return "AI service error: " + e.getMessage();
+        }
+    }
+
+    public String fetchAndExtractJob(String url) {
+        try {
+            WebClient webClient = WebClient.builder()
+                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(5 * 1024 * 1024))
+                    .build();
+
+            String pageContent = webClient
+                    .get()
+                    .uri(url)
+                    .header("User-Agent", "Mozilla/5.0")
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            String text = pageContent.replaceAll("<script[^>]*>[\\s\\S]*?</script>", "")
+                    .replaceAll("<style[^>]*>[\\s\\S]*?</style>", "")
+                    .replaceAll("<[^>]+>", " ")
+                    .replaceAll("&nbsp;", " ")
+                    .replaceAll("&amp;", "&")
+                    .replaceAll("\\s+", " ")
+                    .trim();
+
+            if (text.length() > 3000) {
+                text = text.substring(0, 3000);
+            }
+
+            return extractJobDetails(text);
+        } catch (Exception e) {
+            return "Error fetching URL: " + e.getMessage();
+        }
+    }
 }
