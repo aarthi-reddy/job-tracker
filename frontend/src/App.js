@@ -4,12 +4,14 @@ import './App.css';
 import JobForm from './components/JobForm';
 import JobBoard from './components/JobBoard';
 import AITools from './components/AITools';
-import { FiZap } from 'react-icons/fi';
+import AuthPage from './components/AuthPage';
+import { FiZap, FiLogOut } from 'react-icons/fi';
 
 const API_URL = 'http://localhost:8080/api/applications';
 const AI_URL = 'http://localhost:8080/api/ai';
 
 function App() {
+  const [user, setUser] = useState(null);
   const [applications, setApplications] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
@@ -19,8 +21,28 @@ function App() {
   const [smartLoading, setSmartLoading] = useState(false);
 
   useEffect(() => {
-    fetchApplications();
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchApplications();
+    }
   }, []);
+
+  const handleLogin = (data) => {
+    setUser({ email: data.email, fullName: data.fullName });
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    fetchApplications();
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setApplications([]);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
+  };
 
   const fetchApplications = async () => {
     try {
@@ -28,6 +50,9 @@ function App() {
       setApplications(response.data);
     } catch (error) {
       console.error('Error fetching applications:', error);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        handleLogout();
+      }
     }
   };
 
@@ -81,36 +106,40 @@ function App() {
   };
 
   const handleSmartAdd = async () => {
-      if (!jobDescription.trim()) return;
-      setSmartLoading(true);
-      try {
-        let response;
-        const input = jobDescription.trim();
+    if (!jobDescription.trim()) return;
+    setSmartLoading(true);
+    try {
+      let response;
+      const input = jobDescription.trim();
 
-        if (input.startsWith('http://') || input.startsWith('https://')) {
-          response = await axios.post(`${AI_URL}/extract-job-url`, { url: input });
-        } else {
-          response = await axios.post(`${AI_URL}/extract-job`, { jobDescription: input });
-        }
-
-        const cleanResult = response.data.result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const parsed = JSON.parse(cleanResult);
-        setEditingApp({
-          company: parsed.company || '',
-          role: parsed.role || '',
-          notes: parsed.notes || '',
-          status: 'APPLIED',
-          jobUrl: input.startsWith('http') ? input : '',
-        });
-        setShowSmartAdd(false);
-        setJobDescription('');
-        setShowForm(true);
-      } catch (error) {
-        console.error('Error parsing job:', error);
-        alert('Could not parse job details. Please try again or add manually.');
+      if (input.startsWith('http://') || input.startsWith('https://')) {
+        response = await axios.post(`${AI_URL}/extract-job-url`, { url: input });
+      } else {
+        response = await axios.post(`${AI_URL}/extract-job`, { jobDescription: input });
       }
-      setSmartLoading(false);
-    };
+
+      const cleanResult = response.data.result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleanResult);
+      setEditingApp({
+        company: parsed.company || '',
+        role: parsed.role || '',
+        notes: parsed.notes || '',
+        status: 'APPLIED',
+        jobUrl: input.startsWith('http') ? input : '',
+      });
+      setShowSmartAdd(false);
+      setJobDescription('');
+      setShowForm(true);
+    } catch (error) {
+      console.error('Error parsing job:', error);
+      alert('Could not parse job details. Please try again or add manually.');
+    }
+    setSmartLoading(false);
+  };
+
+  if (!user) {
+    return <AuthPage onLogin={handleLogin} />;
+  }
 
   const stats = {
     total: applications.length,
@@ -125,7 +154,7 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <h1>JobTracker</h1>
-          <p className="subtitle">AI-Powered Job Application Tracker</p>
+          <p className="subtitle">Welcome, {user.fullName}</p>
         </div>
         <div className="header-buttons">
           <button className="smart-add-btn" onClick={() => setShowSmartAdd(true)}>
@@ -133,6 +162,9 @@ function App() {
           </button>
           <button className="add-btn" onClick={() => setShowForm(true)}>
             + Add Application
+          </button>
+          <button className="logout-btn" onClick={handleLogout}>
+            <FiLogOut /> Logout
           </button>
         </div>
       </header>
@@ -203,12 +235,12 @@ function App() {
       )}
 
       <JobBoard
-              applications={applications}
-              onUpdateStatus={updateStatus}
-              onEdit={handleEdit}
-              onDelete={deleteApplication}
-              onAI={setAiApp}
-              onRefresh={fetchApplications}
+        applications={applications}
+        onUpdateStatus={updateStatus}
+        onEdit={handleEdit}
+        onDelete={deleteApplication}
+        onAI={setAiApp}
+        onRefresh={fetchApplications}
       />
     </div>
   );

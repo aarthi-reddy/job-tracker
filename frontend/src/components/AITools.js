@@ -5,11 +5,14 @@ import { FiMessageSquare, FiFileText, FiHelpCircle, FiX, FiUpload } from 'react-
 const AI_URL = 'http://localhost:8080/api/ai';
 
 function AITools({ app, onClose }) {
+
   const [activeTab, setActiveTab] = useState('interview');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [resumeText, setResumeText] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
+
+  if (!app) return null;
 
   const getInterviewQuestions = async () => {
     setLoading(true);
