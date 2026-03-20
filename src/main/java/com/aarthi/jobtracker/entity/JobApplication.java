@@ -37,6 +37,10 @@ public class JobApplication {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne
+    @JoinColumn(name = "resume_id")
+    private Resume resume;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

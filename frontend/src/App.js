@@ -203,11 +203,12 @@ function App() {
       )}
 
       <JobBoard
-        applications={applications}
-        onUpdateStatus={updateStatus}
-        onEdit={handleEdit}
-        onDelete={deleteApplication}
-        onAI={setAiApp}
+              applications={applications}
+              onUpdateStatus={updateStatus}
+              onEdit={handleEdit}
+              onDelete={deleteApplication}
+              onAI={setAiApp}
+              onRefresh={fetchApplications}
       />
     </div>
   );

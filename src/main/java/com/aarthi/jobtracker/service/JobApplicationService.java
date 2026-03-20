@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.aarthi.jobtracker.repository.ResumeRepository;
+import com.aarthi.jobtracker.entity.Resume;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +19,7 @@ public class JobApplicationService {
 
     private final JobApplicationRepository repository;
     private final EmailService emailService;
+    private final ResumeRepository resumeRepository;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public JobApplicationResponse createApplication(JobApplicationRequest request) {
@@ -92,6 +95,16 @@ public class JobApplicationService {
     }
 
     private JobApplicationResponse mapToResponse(JobApplication app) {
+        List<Resume> docs = resumeRepository.findByApplicationId(app.getId());
+        List<JobApplicationResponse.ResumeInfo> docInfos = docs.stream()
+                .map(d -> JobApplicationResponse.ResumeInfo.builder()
+                        .id(d.getId())
+                        .fileName(d.getFileName())
+                        .fileType(d.getFileType())
+                        .uploadedAt(d.getUploadedAt().format(FORMATTER))
+                        .build())
+                .collect(Collectors.toList());
+
         return JobApplicationResponse.builder()
                 .id(app.getId())
                 .company(app.getCompany())
@@ -102,6 +115,7 @@ public class JobApplicationService {
                 .appliedDate(app.getAppliedDate().format(FORMATTER))
                 .updatedAt(app.getUpdatedAt().format(FORMATTER))
                 .createdAt(app.getCreatedAt().format(FORMATTER))
+                .documents(docInfos)
                 .build();
     }
 }
