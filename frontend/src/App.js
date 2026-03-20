@@ -7,8 +7,8 @@ import AITools from './components/AITools';
 import AuthPage from './components/AuthPage';
 import { FiZap, FiLogOut } from 'react-icons/fi';
 
-const API_URL = 'http://localhost:8080/api/applications';
-const AI_URL = 'http://localhost:8080/api/ai';
+const API_URL = '/api/applications';
+const AI_URL = '/api/ai';
 
 function App() {
   const [user, setUser] = useState(null);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { FiEdit2, FiTrash2, FiExternalLink, FiCpu, FiFileText, FiUpload, FiDownload, FiX, FiEye } from 'react-icons/fi';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = '/api';
 
 const COLUMNS = [
   { status: 'APPLIED', label: 'Applied', color: '#3b82f6' },

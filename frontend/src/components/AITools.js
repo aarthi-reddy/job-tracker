@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { FiMessageSquare, FiFileText, FiHelpCircle, FiX, FiUpload } from 'react-icons/fi';
 
-const AI_URL = 'http://localhost:8080/api/ai';
+const AI_URL = '/api/ai';
 
 function AITools({ app, onClose }) {
 
