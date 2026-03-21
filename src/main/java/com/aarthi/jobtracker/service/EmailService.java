@@ -1,6 +1,5 @@
 package com.aarthi.jobtracker.service;
 
-import com.aarthi.jobtracker.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -8,7 +7,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,20 +18,9 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    private String getCurrentUserEmail() {
-        try {
-            User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            return user.getEmail();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     @Async
-    public void sendNewApplicationEmail(String company, String role) {
-        String toEmail = getCurrentUserEmail();
+    public void sendNewApplicationEmail(String toEmail, String company, String role) {
         if (toEmail == null) return;
-
         String subject = "New Application Added: " + company + " - " + role;
         String body = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto'>"
                 + "<h2 style='color:#3b82f6'>New Job Application Added</h2>"
@@ -48,10 +35,8 @@ public class EmailService {
     }
 
     @Async
-    public void sendStatusUpdateEmail(String company, String role, String oldStatus, String newStatus) {
-        String toEmail = getCurrentUserEmail();
+    public void sendStatusUpdateEmail(String toEmail, String company, String role, String oldStatus, String newStatus) {
         if (toEmail == null) return;
-
         String subject = "Status Update: " + company + " - " + role + " → " + newStatus;
         String body = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto'>"
                 + "<h2 style='color:#3b82f6'>Application Status Updated</h2>"

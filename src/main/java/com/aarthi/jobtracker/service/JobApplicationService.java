@@ -43,8 +43,7 @@ public class JobApplicationService {
         }
 
         JobApplication saved = repository.save(app);
-        emailService.sendNewApplicationEmail(saved.getCompany(), saved.getRole());
-        return mapToResponse(saved);
+        emailService.sendNewApplicationEmail(getCurrentUser().getEmail(), saved.getCompany(), saved.getRole());        return mapToResponse(saved);
     }
 
     public List<JobApplicationResponse> getAllApplications() {
@@ -76,7 +75,7 @@ public class JobApplicationService {
         JobApplication saved = repository.save(app);
 
         if (request.getStatus() != null && !oldStatus.equals(saved.getStatus())) {
-            emailService.sendStatusUpdateEmail(saved.getCompany(), saved.getRole(), oldStatus, saved.getStatus());
+            emailService.sendStatusUpdateEmail(getCurrentUser().getEmail(), saved.getCompany(), saved.getRole(), oldStatus, saved.getStatus());
         }
 
         return mapToResponse(saved);
