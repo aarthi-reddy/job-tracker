@@ -6,9 +6,11 @@ import JobBoard from './components/JobBoard';
 import AITools from './components/AITools';
 import AuthPage from './components/AuthPage';
 import { FiZap, FiLogOut } from 'react-icons/fi';
+import AdminPage from './components/AdminPage';
 
 const API_URL = '/api/applications';
 const AI_URL = '/api/ai';
+const [showAdmin, setShowAdmin] = useState(false);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -141,6 +143,10 @@ function App() {
     return <AuthPage onLogin={handleLogin} />;
   }
 
+  if (showAdmin) {
+    return <AdminPage onBack={() => setShowAdmin(false)} />;
+  }
+
   const stats = {
     total: applications.length,
     applied: applications.filter(a => a.status === 'APPLIED').length,
@@ -163,6 +169,9 @@ function App() {
           <button className="add-btn" onClick={() => setShowForm(true)}>
             + Add Application
           </button>
+          {user && user.email === 'aarthireddy.chinnu@gmail.com' && (
+            <button onClick={() => setShowAdmin(true)} className="btn-admin">📊 Admin</button>
+          )}
           <button className="logout-btn" onClick={handleLogout}>
             <FiLogOut /> Logout
           </button>

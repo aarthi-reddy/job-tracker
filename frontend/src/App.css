@@ -903,3 +903,50 @@ body {
 .switch-resume:hover {
   text-decoration: underline;
 }
+
+/* Admin Dashboard */
+.admin-page { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.admin-header { text-align: center; margin-bottom: 30px; }
+.admin-header h1 { font-size: 2rem; margin: 10px 0 5px; }
+.admin-subtitle { color: #64748b; }
+.btn-back { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+.btn-back:hover { background: #e2e8f0; }
+.btn-admin { background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-right: 8px; }
+.btn-admin:hover { background: #7c3aed; }
+.admin-error { text-align: center; padding: 60px 20px; }
+.admin-error h2 { font-size: 1.5rem; color: #ef4444; }
+
+.stats-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+.stat-card { background: white; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 4px solid #3b82f6; }
+.stat-card.stat-users { border-top-color: #3b82f6; }
+.stat-card.stat-apps { border-top-color: #8b5cf6; }
+.stat-card.stat-docs { border-top-color: #f59e0b; }
+.stat-card.stat-avg { border-top-color: #22c55e; }
+.stat-icon { font-size: 2rem; margin-bottom: 8px; }
+.stat-number { font-size: 2.5rem; font-weight: 700; color: #1e293b; }
+.stat-label { color: #64748b; font-size: 0.9rem; margin-top: 4px; }
+
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.admin-section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.admin-section h2 { font-size: 1.1rem; margin-bottom: 16px; color: #1e293b; }
+
+.status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.status-bar-label { width: 100px; font-size: 0.85rem; font-weight: 600; color: #475569; }
+.status-bar-track { flex: 1; height: 24px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
+.status-bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; min-width: 4px; }
+.status-bar-count { width: 30px; text-align: right; font-weight: 600; font-size: 0.9rem; }
+
+.users-table-wrap { overflow-x: auto; }
+.users-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.users-table th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 600; }
+.users-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; }
+.users-table tr:hover { background: #f8fafc; }
+.user-app-bar { position: relative; width: 80px; height: 20px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.user-app-bar-fill { position: absolute; left: 0; top: 0; height: 100%; background: #3b82f6; border-radius: 4px; opacity: 0.2; }
+.user-app-bar span { position: relative; z-index: 1; font-weight: 600; font-size: 0.8rem; padding-left: 6px; line-height: 20px; }
+.no-data { color: #94a3b8; text-align: center; padding: 20px; }
+
+@media (max-width: 768px) {
+  .stats-cards { grid-template-columns: repeat(2, 1fr); }
+  .admin-grid { grid-template-columns: 1fr; }
+}
