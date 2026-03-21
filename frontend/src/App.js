@@ -10,13 +10,13 @@ import AdminPage from './components/AdminPage';
 
 const API_URL = '/api/applications';
 const AI_URL = '/api/ai';
-const [showAdmin, setShowAdmin] = useState(false);
 
 function App() {
   const [user, setUser] = useState(null);
   const [applications, setApplications] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [aiApp, setAiApp] = useState(null);
   const [showSmartAdd, setShowSmartAdd] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
