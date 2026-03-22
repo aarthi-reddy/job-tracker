@@ -21,6 +21,11 @@ function App() {
   const [showSmartAdd, setShowSmartAdd] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [smartLoading, setSmartLoading] = useState(false);
+  const [showJobMatch, setShowJobMatch] = useState(false);
+  const [jobMatchLoading, setJobMatchLoading] = useState(false);
+  const [jobMatchResults, setJobMatchResults] = useState(null);
+  const [jobMatchFile, setJobMatchFile] = useState(null);
+  const [jobMatchText, setJobMatchText] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -45,6 +50,8 @@ function App() {
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
   };
+
+
 
   const fetchApplications = async () => {
     try {
@@ -107,6 +114,32 @@ function App() {
     setEditingApp(null);
   };
 
+  const handleJobMatch = async () => {
+    setJobMatchLoading(true);
+    setJobMatchResults(null);
+    try {
+      let text = jobMatchText;
+      if (jobMatchFile) {
+        const formData = new FormData();
+        formData.append('file', jobMatchFile);
+        formData.append('targetRole', 'Software Engineer');
+        const uploadRes = await axios.post('/api/ai/upload-resume', formData);
+        text = uploadRes.data.text || uploadRes.data.feedback;
+      }
+      const res = await axios.post('/api/ai/job-match', { resumeText: text });
+      const cleaned = res.data.result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      try {
+        setJobMatchResults(JSON.parse(cleaned));
+      } catch (e) {
+        setJobMatchResults(null);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setJobMatchLoading(false);
+  };
+
+
   const handleSmartAdd = async () => {
     if (!jobDescription.trim()) return;
     setSmartLoading(true);
@@ -163,6 +196,8 @@ function App() {
           <p className="subtitle">Welcome, {user.fullName}</p>
         </div>
         <div className="header-buttons">
+          <button onClick={() => setShowJobMatch(true)} className="job-match-header-btn">🔍 Job Match
+          </button>
           <button className="smart-add-btn" onClick={() => setShowSmartAdd(true)}>
             <FiZap /> Smart Add
           </button>
@@ -251,6 +286,56 @@ function App() {
         onAI={setAiApp}
         onRefresh={fetchApplications}
       />
+
+      {showJobMatch && (
+        <div className="modal-overlay" onClick={() => { setShowJobMatch(false); setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }}>
+          <div className="job-match-modal" onClick={e => e.stopPropagation()}>
+            <div className="job-match-modal-header">
+              <div>
+                <h2>🔍 AI Job Match</h2>
+                <p>Upload your resume to find matching jobs</p>
+              </div>
+              <button onClick={() => { setShowJobMatch(false); setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }} className="ai-close-btn">✕</button>
+            </div>
+            <div className="job-match-modal-body">
+              {!jobMatchResults ? (
+                <div className="job-match-input-section">
+                  <input type="file" accept=".pdf" onChange={e => setJobMatchFile(e.target.files[0])} className="ai-file-input" />
+                  <p className="ai-or">— or paste your resume text —</p>
+                  <textarea value={jobMatchText} onChange={e => setJobMatchText(e.target.value)} placeholder="Paste your resume text here..." rows={8} className="ai-textarea" />
+                  <button onClick={handleJobMatch} disabled={jobMatchLoading || (!jobMatchFile && !jobMatchText)} className="job-match-search-btn">
+                    {jobMatchLoading ? '🔄 Analyzing Resume...' : '🔍 Find Matching Jobs'}
+                  </button>
+                </div>
+              ) : (
+                <div className="job-match-results-section">
+                  <div className="job-match-results-header">
+                    <h3>🎯 {jobMatchResults.length} Jobs Found For You</h3>
+                    <button onClick={() => { setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }} className="job-match-retry-btn">↻ Try Again</button>
+                  </div>
+                  <div className="job-match-results-grid">
+                    {jobMatchResults.map((job, i) => (
+                      <div key={i} className="job-match-result-card">
+                        <div className="job-match-result-header">
+                          <span className="job-match-rank">#{i + 1}</span>
+                          <h4>{job.title}</h4>
+                          <span className="job-match-salary">{job.salary_range}</span>
+                        </div>
+                        <p className="job-match-result-reason">{job.match_reason}</p>
+                        <div className="job-match-result-links">
+                          <a href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.search_keywords || job.title)}`} target="_blank" rel="noreferrer">🔗 LinkedIn</a>
+                          <a href={`https://www.indeed.com/jobs?q=${encodeURIComponent(job.search_keywords || job.title)}`} target="_blank" rel="noreferrer">🔗 Indeed</a>
+                          <a href={`https://www.google.com/search?q=${encodeURIComponent(job.title + ' jobs near me')}`} target="_blank" rel="noreferrer">🔗 Google</a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
