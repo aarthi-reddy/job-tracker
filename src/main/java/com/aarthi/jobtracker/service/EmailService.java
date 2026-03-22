@@ -64,4 +64,19 @@ public class EmailService {
             System.err.println("Failed to send email: " + e.getMessage());
         }
     }
+
+    @Async
+    public void sendOtpEmail(String toEmail, String otp) {
+        String subject = "JobTracker - Verify Your Email";
+        String body = "<div style='font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:20px'>"
+                + "<h2 style='color:#0f172a;text-align:center'>Verify Your Email</h2>"
+                + "<p style='color:#475569;text-align:center'>Enter this code to complete your registration</p>"
+                + "<div style='background:#f1f5f9;border-radius:12px;padding:24px;text-align:center;margin:24px 0'>"
+                + "<span style='font-size:36px;font-weight:700;letter-spacing:8px;color:#0f172a'>" + otp + "</span>"
+                + "</div>"
+                + "<p style='color:#94a3b8;text-align:center;font-size:13px'>This code expires in 10 minutes</p>"
+                + "<p style='color:#94a3b8;text-align:center;font-size:13px'>If you didn't create an account, ignore this email</p>"
+                + "</div>";
+        sendEmail(toEmail, subject, body);
+    }
 }

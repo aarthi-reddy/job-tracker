@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -28,6 +29,11 @@ public class User {
     private String fullName;
 
     private LocalDateTime createdAt;
+
+    private boolean verified;
+    private String otp;
+    private LocalDateTime otpExpiry;
+
 
     @PrePersist
     protected void onCreate() {

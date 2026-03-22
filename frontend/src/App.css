@@ -990,3 +990,80 @@ body {
   .results-filters { flex-direction: column; }
   .filter-group { min-width: 100%; }
 }
+
+/* OTP Verification */
+.otp-inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 24px 0;
+}
+
+.otp-input {
+  width: 50px;
+  height: 56px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.otp-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: white;
+}
+
+.otp-success {
+  color: #16a34a;
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: #f0fdf4;
+  border-radius: 6px;
+}
+
+.otp-footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.otp-footer p {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resend-btn:hover { text-decoration: underline; }
+.resend-btn:disabled { color: #94a3b8; cursor: not-allowed; }
+
+.back-to-login {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.back-to-login:hover { background: #f8fafc; }
