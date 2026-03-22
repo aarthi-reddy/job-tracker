@@ -1,70 +1,232 @@
-# Getting Started with Create React App
+# JobTracker — AI-Powered Job Application Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack job application tracking platform with AI-powered career coaching, built with Spring Boot and React.
 
-## Available Scripts
+**Live Demo:** [http://13.218.88.170:8080](http://13.218.88.170:8080)
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+### Core Application
+- **Kanban Board** — Track jobs across 6 status columns (Applied, Phone Screen, Technical, Onsite, Offer, Rejected)
+- **Smart Add** — Paste a job URL or description and AI automatically extracts company, role, and details
+- **Document Management** — Upload resume and cover letter PDFs per job with in-app PDF viewer
+- **Email Notifications** — Automatic email alerts on new applications and status changes, sent to the logged-in user's email
+- **Multi-User Support** — JWT authentication with BCrypt password hashing and user-specific data isolation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### AI Career Coach (Groq API — Llama 3.3 70B)
+- **Interview Prep** — Generates role-specific interview questions (technical, behavioral, system design)
+- **Resume Review** — AI-powered resume feedback tailored to the target role (supports PDF upload)
+- **Cover Letter Generator** — Customized cover letters based on your resume and the job
+- **Smart Job Search** — AI analyzes your resume and suggests matching jobs with filtered links to LinkedIn, Indeed, Google Jobs, and Glassdoor
+- **Skill Gap Analysis** — Compare your resume against a job description to identify missing skills and get recommendations
+- **Resume Score** — Resume scored out of 100 with category breakdowns and actionable improvement tips
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Admin Dashboard
+- Platform usage statistics (total users, applications, documents)
+- Application status breakdown chart
+- User registration details and activity metrics
+- Access restricted to admin email only
 
-### `npm test`
+## Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Backend
+- **Java 17** with **Spring Boot 3.5**
+- **Spring Security** with JWT authentication
+- **Spring Data JPA** with PostgreSQL
+- **Spring WebFlux** (WebClient for external API calls)
+- **Spring Mail** for async email notifications
+- **Apache PDFBox 3.0** for PDF text extraction
+- **Groq API** (Llama 3.3 70B) for all AI features
 
-### `npm run build`
+### Frontend
+- **React 18** with functional components and hooks
+- **Axios** for API communication
+- **CSS3** with custom responsive design
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Infrastructure
+- **PostgreSQL 17** database
+- **Docker** multi-stage containerized build
+- **AWS EC2** (Amazon Linux 2023) production deployment
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Architecture
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+React Frontend
+    |
+    | Axios HTTP + JWT Bearer Token
+    v
+Spring Boot REST API (port 8080)
+    ├── AuthController         -> Registration, Login, JWT
+    ├── JobApplicationController -> CRUD operations
+    ├── AIController           -> AI career coach features
+    ├── ResumeController       -> Document upload/download
+    ├── AdminController        -> Platform statistics
+    |
+    ├── JobApplicationService  -> Business logic + email triggers
+    ├── AIService              -> Groq API integration
+    ├── ResumeService          -> PDF processing with PDFBox
+    ├── EmailService           -> Async email via Gmail SMTP
+    |
+    ├── SecurityConfig         -> JWT filter chain
+    ├── JwtUtil                -> Token generation/validation
+    └── JwtAuthFilter          -> Request authentication
+```
 
-### `npm run eject`
+## Project Structure
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```
+job-tracker/
+├── src/main/java/com/aarthi/jobtracker/
+│   ├── config/          # Security, JWT, Web configuration
+│   ├── controller/      # REST API endpoints
+│   ├── dto/             # Request/Response objects
+│   ├── entity/          # JPA entities (User, JobApplication, Resume)
+│   ├── repository/      # Data access layer
+│   └── service/         # Business logic, AI, Email services
+├── frontend/
+│   └── src/
+│       ├── components/  # AuthPage, JobBoard, JobForm, AITools, AdminPage
+│       ├── App.js       # Main application with routing
+│       └── App.css      # Complete styles
+├── Dockerfile           # Multi-stage Docker build
+└── pom.xml              # Maven dependencies
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## API Endpoints
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login and get JWT token |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Job Applications (requires JWT)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/applications` | Get all user applications |
+| POST | `/api/applications` | Create new application |
+| PUT | `/api/applications/{id}` | Update application |
+| DELETE | `/api/applications/{id}` | Delete application |
+| GET | `/api/applications/status/{status}` | Filter by status |
+| GET | `/api/applications/search?company=` | Search by company |
 
-## Learn More
+### AI Features (requires JWT)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/interview-questions` | Generate interview questions |
+| POST | `/api/ai/resume-feedback` | Get resume feedback (text) |
+| POST | `/api/ai/upload-resume` | Upload resume PDF for feedback |
+| POST | `/api/ai/cover-letter` | Generate cover letter |
+| POST | `/api/ai/upload-resume-cover-letter` | Cover letter from PDF |
+| POST | `/api/ai/job-match` | Find matching jobs from resume |
+| POST | `/api/ai/skill-gap` | Analyze skill gaps |
+| POST | `/api/ai/resume-score` | Score resume out of 100 |
+| POST | `/api/ai/extract-job-url` | Extract job details from URL |
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Documents (requires JWT)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/documents/upload/{appId}` | Upload document |
+| GET | `/api/documents/download/{id}` | Download/view document |
+| DELETE | `/api/documents/{id}` | Delete document |
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Admin (requires JWT + admin email)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/stats` | Get platform statistics |
 
-### Code Splitting
+## Getting Started
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Prerequisites
+- Java 17+
+- Node.js 18+
+- PostgreSQL 17
+- Groq API key (free at [console.groq.com](https://console.groq.com))
 
-### Analyzing the Bundle Size
+### Local Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+1. Clone the repository
+```bash
+git clone https://github.com/aarthi-reddy/job-tracker.git
+cd job-tracker
+```
 
-### Making a Progressive Web App
+2. Create the database
+```bash
+createdb jobtracker
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+3. Create `src/main/resources/application.properties`
+```properties
+server.port=8080
+spring.datasource.url=jdbc:postgresql://localhost:5432/jobtracker
+spring.datasource.username=YOUR_USERNAME
+spring.datasource.password=YOUR_PASSWORD
+spring.jpa.hibernate.ddl-auto=update
+groq.api.key=YOUR_GROQ_API_KEY
+jwt.secret=YOUR_JWT_SECRET_AT_LEAST_256_BITS
+jwt.expiration=86400000
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=YOUR_EMAIL
+spring.mail.password=YOUR_APP_PASSWORD
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+resume.upload.dir=uploads/resumes
+```
 
-### Advanced Configuration
+4. Build the frontend
+```bash
+cd frontend
+npm install
+npm run build
+cp -r build/* ../src/main/resources/static/
+cd ..
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+5. Run the application
+```bash
+./mvnw spring-boot:run
+```
 
-### Deployment
+6. Open [http://localhost:8080](http://localhost:8080)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Docker Deployment
 
-### `npm run build` fails to minify
+```bash
+docker build -t jobtracker-api .
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+docker network create jobtracker-net
+
+docker run -d --name jobtracker-db --network jobtracker-net \
+  -e POSTGRES_DB=jobtracker \
+  -e POSTGRES_USER=YOUR_USER \
+  -e POSTGRES_PASSWORD=YOUR_PASSWORD \
+  postgres:17
+
+docker run -d --name jobtracker-api --network jobtracker-net \
+  -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://jobtracker-db:5432/jobtracker \
+  -e SPRING_DATASOURCE_USERNAME=YOUR_USER \
+  -e SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD \
+  -e GROQ_API_KEY=YOUR_GROQ_KEY \
+  jobtracker-api
+```
+
+## Design Decisions
+
+- **DTOs over Entities in API** — Decouples database schema from API contract. Adding a database column won't break the API.
+- **Multi-stage Docker build** — Build stage compiles the JAR, runtime stage only includes the JRE. Keeps the image small and secure.
+- **Groq API over OpenAI** — Free tier with generous rate limits, uses Llama 3.3 70B which performs comparably for this use case.
+- **Async email with @Async** — Email sending runs in a background thread so API responses are not delayed.
+- **User email passed to async service** — SecurityContext doesn't propagate to async threads, so the user email is passed directly to the email service.
+- **JWT stored in localStorage** — Simple approach for SPA authentication with axios default headers.
+- **Static files served from Spring Boot** — React build is copied into `src/main/resources/static/` so a single JAR serves both frontend and API.
+
+## Author
+
+**Aarthi Reddy** — [GitHub](https://github.com/aarthi-reddy)
+
+Built as a portfolio project demonstrating full-stack development with AI integration, cloud deployment, and production-ready architecture.
