@@ -75,10 +75,9 @@ const AITools = ({ app, onClose }) => {
       let text = resumeText;
       if (resumeFile) text = await extractPdfText(resumeFile);
       const res = await axios.post('/api/ai/resume-feedback', {
-        resumeText: text,
-        role: app.role,
-        company: app.company
-      });
+              resumeText: text,
+              targetRole: app.role
+            });
       setResult(res.data.feedback);
     } catch (err) {
       setResult('Error reviewing resume.');
