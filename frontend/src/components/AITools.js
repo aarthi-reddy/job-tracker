@@ -38,8 +38,9 @@ const AITools = ({ app, onClose }) => {
   const extractPdfText = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('targetRole', app.role || 'Software Engineer');
     const res = await axios.post('/api/ai/upload-resume', formData);
-    return res.data.text;
+    return res.data.text || res.data.feedback;
   };
 
   const parseJSON = (text) => {
@@ -72,13 +73,19 @@ const AITools = ({ app, onClose }) => {
     setLoading(true);
     setResult('');
     try {
-      let text = resumeText;
-      if (resumeFile) text = await extractPdfText(resumeFile);
-      const res = await axios.post('/api/ai/resume-feedback', {
-              resumeText: text,
-              targetRole: app.role
-            });
-      setResult(res.data.feedback);
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        formData.append('targetRole', app.role);
+        const res = await axios.post('/api/ai/upload-resume', formData);
+        setResult(res.data.feedback);
+      } else {
+        const res = await axios.post('/api/ai/resume-feedback', {
+          resumeText: resumeText,
+          targetRole: app.role
+        });
+        setResult(res.data.feedback);
+      }
     } catch (err) {
       setResult('Error reviewing resume.');
     }
@@ -89,14 +96,21 @@ const AITools = ({ app, onClose }) => {
     setLoading(true);
     setResult('');
     try {
-      let text = coverLetterText;
-      if (resumeFile) text = await extractPdfText(resumeFile);
-      const res = await axios.post('/api/ai/cover-letter', {
-        resumeText: text,
-        role: app.role,
-        company: app.company
-      });
-      setResult(res.data.coverLetter);
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        formData.append('company', app.company);
+        formData.append('role', app.role);
+        const res = await axios.post('/api/ai/upload-resume-cover-letter', formData);
+        setResult(res.data.coverLetter);
+      } else {
+        const res = await axios.post('/api/ai/cover-letter', {
+          resumeText: coverLetterText,
+          company: app.company,
+          role: app.role
+        });
+        setResult(res.data.coverLetter);
+      }
     } catch (err) {
       setResult('Error generating cover letter.');
     }
@@ -220,7 +234,7 @@ const AITools = ({ app, onClose }) => {
               <input type="file" accept=".pdf" onChange={e => setResumeFile(e.target.files[0])} className="ai-file-input" />
               <p className="ai-or">— or paste your resume text —</p>
               <textarea value={resumeText} onChange={e => setResumeText(e.target.value)} placeholder="Paste resume text here..." rows={6} className="ai-textarea" />
-              <button onClick={handleResumeReview} disabled={loading && !resumeText && !resumeFile} className="ai-btn">
+              <button onClick={handleResumeReview} disabled={loading} className="ai-btn">
                 {loading ? 'Analyzing...' : 'Review Resume'}
               </button>
             </div>
