@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Map;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -139,5 +141,26 @@ public class AIService {
         } catch (Exception e) {
             return "Error fetching URL: " + e.getMessage();
         }
+    }
+
+    public String askGroq(String prompt) {
+        Map<String, Object> message = Map.of("role", "user", "content", prompt);
+        Map<String, Object> body = Map.of(
+                "model", "llama-3.3-70b-versatile",
+                "messages", List.of(message),
+                "temperature", 0.7
+        );
+
+        return groqWebClient.post()
+                .uri("/openai/v1/chat/completions")
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .map(response -> {
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                    Map<String, Object> messageResp = (Map<String, Object>) choices.get(0).get("message");
+                    return (String) messageResp.get("content");
+                })
+                .block();
     }
 }

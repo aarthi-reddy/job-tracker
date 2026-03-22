@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -79,6 +80,51 @@ public class AIController {
     @PostMapping("/extract-job-url")
     public ResponseEntity<Map<String, String>> extractJobFromUrl(@RequestBody Map<String, String> request) {
         String result = aiService.fetchAndExtractJob(request.get("url"));
+        return ResponseEntity.ok(Map.of("result", result));
+    }
+
+    @PostMapping("/job-match")
+    public ResponseEntity<?> getJobMatches(@RequestBody Map<String, String> request) {
+        String resumeText = request.get("resumeText");
+        String prompt = "Analyze this resume and suggest the top 8 job titles that best match this person's skills and experience. "
+                + "For each job, provide: job title, why it's a match, and estimated salary range. "
+                + "Respond ONLY in this JSON format, no other text:\n"
+                + "[{\"title\": \"...\", \"match_reason\": \"...\", \"salary_range\": \"...\", \"search_keywords\": \"...\"}]\n\n"
+                + "Resume:\n" + resumeText;
+        String result = aiService.askGroq(prompt);
+        return ResponseEntity.ok(Map.of("result", result));
+    }
+
+    @PostMapping("/skill-gap")
+    public ResponseEntity<?> getSkillGap(@RequestBody Map<String, String> request) {
+        String resumeText = request.get("resumeText");
+        String jobDescription = request.get("jobDescription");
+        String prompt = "Compare this resume against the job description. Provide a detailed skill gap analysis. "
+                + "Respond ONLY in this JSON format, no other text:\n"
+                + "{\"match_percentage\": 85, \"matching_skills\": [\"Java\", \"Spring Boot\"], "
+                + "\"missing_skills\": [\"Kubernetes\", \"AWS\"], "
+                + "\"recommendations\": [\"Take AWS certification\", \"Learn Docker\"], "
+                + "\"summary\": \"Strong backend match but needs cloud skills\"}\n\n"
+                + "Resume:\n" + resumeText + "\n\nJob Description:\n" + jobDescription;
+        String result = aiService.askGroq(prompt);
+        return ResponseEntity.ok(Map.of("result", result));
+    }
+
+    @PostMapping("/resume-score")
+    public ResponseEntity<?> getResumeScore(@RequestBody Map<String, String> request) {
+        String resumeText = request.get("resumeText");
+        String prompt = "Score this resume out of 100 and provide detailed feedback. "
+                + "Evaluate: content quality, formatting suggestions, keyword optimization, impact statements, and ATS compatibility. "
+                + "Respond ONLY in this JSON format, no other text:\n"
+                + "{\"overall_score\": 75, \"categories\": ["
+                + "{\"name\": \"Content Quality\", \"score\": 80, \"feedback\": \"...\"}, "
+                + "{\"name\": \"Keywords & ATS\", \"score\": 70, \"feedback\": \"...\"}, "
+                + "{\"name\": \"Impact Statements\", \"score\": 65, \"feedback\": \"...\"}, "
+                + "{\"name\": \"Format & Structure\", \"score\": 85, \"feedback\": \"...\"}, "
+                + "{\"name\": \"Overall Impression\", \"score\": 75, \"feedback\": \"...\"}], "
+                + "\"top_improvements\": [\"...\", \"...\", \"...\"]}\n\n"
+                + "Resume:\n" + resumeText;
+        String result = aiService.askGroq(prompt);
         return ResponseEntity.ok(Map.of("result", result));
     }
 }
