@@ -26,6 +26,9 @@ function App() {
   const [jobMatchResults, setJobMatchResults] = useState(null);
   const [jobMatchFile, setJobMatchFile] = useState(null);
   const [jobMatchText, setJobMatchText] = useState('');
+  const [jobSearchFilters, setJobSearchFilters] = useState({
+    keywords: '', location: '', experience: '', jobType: '', posted: ''
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -114,7 +117,18 @@ function App() {
     setEditingApp(null);
   };
 
-  const handleJobMatch = async () => {
+  const handleSmartSearch = () => {
+    const filters = jobSearchFilters;
+    const results = [{
+      title: filters.keywords,
+      match_reason: `Direct search for ${filters.keywords}${filters.location ? ' in ' + filters.location : ''}${filters.experience ? ' (' + filters.experience + ' level)' : ''}`,
+      salary_range: 'Varies',
+      search_keywords: filters.keywords + (filters.experience === 'internship' ? ' intern' : filters.experience === 'entry' ? ' entry level junior' : filters.experience === 'senior' ? ' senior lead' : '')
+    }];
+    setJobMatchResults(results);
+  };
+
+  const handleAIJobMatch = async () => {
     setJobMatchLoading(true);
     setJobMatchResults(null);
     try {
@@ -289,29 +303,80 @@ function App() {
 
       {showJobMatch && (
         <div className="modal-overlay" onClick={() => { setShowJobMatch(false); setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }}>
-          <div className="job-match-modal" onClick={e => e.stopPropagation()}>
-            <div className="job-match-modal-header">
+          <div className="job-search-modal" onClick={e => e.stopPropagation()}>
+            <div className="job-search-header">
               <div>
-                <h2>🔍 AI Job Match</h2>
-                <p>Upload your resume to find matching jobs</p>
+                <h2>🔍 Smart Job Search</h2>
+                <p>AI-powered job search across multiple platforms</p>
               </div>
               <button onClick={() => { setShowJobMatch(false); setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }} className="ai-close-btn">✕</button>
             </div>
-            <div className="job-match-modal-body">
+            <div className="job-search-body">
               {!jobMatchResults ? (
-                <div className="job-match-input-section">
-                  <input type="file" accept=".pdf" onChange={e => setJobMatchFile(e.target.files[0])} className="ai-file-input" />
-                  <p className="ai-or">— or paste your resume text —</p>
-                  <textarea value={jobMatchText} onChange={e => setJobMatchText(e.target.value)} placeholder="Paste your resume text here..." rows={8} className="ai-textarea" />
-                  <button onClick={handleJobMatch} disabled={jobMatchLoading || (!jobMatchFile && !jobMatchText)} className="job-match-search-btn">
-                    {jobMatchLoading ? '🔄 Analyzing Resume...' : '🔍 Find Matching Jobs'}
-                  </button>
+                <div className="job-search-content">
+                  <div className="job-search-left">
+                    <h3>📋 Search Filters</h3>
+                    <div className="search-field">
+                      <label>Job Title / Keywords</label>
+                      <input type="text" placeholder="e.g. Software Engineer, Data Analyst" value={jobSearchFilters.keywords} onChange={e => setJobSearchFilters({...jobSearchFilters, keywords: e.target.value})} />
+                    </div>
+                    <div className="search-field">
+                      <label>Location</label>
+                      <input type="text" placeholder="e.g. San Francisco, Remote" value={jobSearchFilters.location} onChange={e => setJobSearchFilters({...jobSearchFilters, location: e.target.value})} />
+                    </div>
+                    <div className="search-row">
+                      <div className="search-field">
+                        <label>Experience Level</label>
+                        <select value={jobSearchFilters.experience} onChange={e => setJobSearchFilters({...jobSearchFilters, experience: e.target.value})}>
+                          <option value="">Any</option>
+                          <option value="internship">Internship</option>
+                          <option value="entry">Entry Level</option>
+                          <option value="mid">Mid Level</option>
+                          <option value="senior">Senior Level</option>
+                        </select>
+                      </div>
+                      <div className="search-field">
+                        <label>Job Type</label>
+                        <select value={jobSearchFilters.jobType} onChange={e => setJobSearchFilters({...jobSearchFilters, jobType: e.target.value})}>
+                          <option value="">Any</option>
+                          <option value="fulltime">Full-time</option>
+                          <option value="parttime">Part-time</option>
+                          <option value="contract">Contract</option>
+                          <option value="internship">Internship</option>
+                          <option value="remote">Remote</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="search-field">
+                      <label>Posted Within</label>
+                      <select value={jobSearchFilters.posted} onChange={e => setJobSearchFilters({...jobSearchFilters, posted: e.target.value})}>
+                        <option value="">Any time</option>
+                        <option value="24hr">Last 24 hours</option>
+                        <option value="3days">Last 3 days</option>
+                        <option value="week">Past week</option>
+                        <option value="month">Past month</option>
+                      </select>
+                    </div>
+                    <button onClick={handleSmartSearch} disabled={!jobSearchFilters.keywords} className="search-now-btn">
+                      🔍 Search Jobs
+                    </button>
+                  </div>
+                  <div className="job-search-right">
+                    <h3>🤖 AI Resume Match</h3>
+                    <p className="search-ai-desc">Upload your resume and AI will suggest the best search keywords for you</p>
+                    <input type="file" accept=".pdf" onChange={e => setJobMatchFile(e.target.files[0])} className="ai-file-input" />
+                    <p className="ai-or">— or paste resume text —</p>
+                    <textarea value={jobMatchText} onChange={e => setJobMatchText(e.target.value)} placeholder="Paste your resume text..." rows={6} className="ai-textarea" />
+                    <button onClick={handleAIJobMatch} disabled={jobMatchLoading || (!jobMatchFile && !jobMatchText)} className="ai-suggest-btn">
+                      {jobMatchLoading ? '🔄 Analyzing...' : '✨ AI Suggest Jobs'}
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="job-match-results-section">
-                  <div className="job-match-results-header">
-                    <h3>🎯 {jobMatchResults.length} Jobs Found For You</h3>
-                    <button onClick={() => { setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }} className="job-match-retry-btn">↻ Try Again</button>
+                <div className="job-search-results">
+                  <div className="job-search-results-header">
+                    <h3>🎯 {jobMatchResults.length} Matching Jobs Found</h3>
+                    <button onClick={() => { setJobMatchResults(null); setJobMatchFile(null); setJobMatchText(''); }} className="job-match-retry-btn">← Back to Search</button>
                   </div>
                   <div className="job-match-results-grid">
                     {jobMatchResults.map((job, i) => (
@@ -323,9 +388,10 @@ function App() {
                         </div>
                         <p className="job-match-result-reason">{job.match_reason}</p>
                         <div className="job-match-result-links">
-                          <a href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.search_keywords || job.title)}`} target="_blank" rel="noreferrer">🔗 LinkedIn</a>
-                          <a href={`https://www.indeed.com/jobs?q=${encodeURIComponent(job.search_keywords || job.title)}`} target="_blank" rel="noreferrer">🔗 Indeed</a>
-                          <a href={`https://www.google.com/search?q=${encodeURIComponent(job.title + ' jobs near me')}`} target="_blank" rel="noreferrer">🔗 Google</a>
+                          <a href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.search_keywords || job.title)}${jobSearchFilters.location ? '&location=' + encodeURIComponent(jobSearchFilters.location) : ''}&f_TPR=${jobSearchFilters.posted === '24hr' ? 'r86400' : jobSearchFilters.posted === '3days' ? 'r259200' : jobSearchFilters.posted === 'week' ? 'r604800' : jobSearchFilters.posted === 'month' ? 'r2592000' : ''}`} target="_blank" rel="noreferrer">🔗 LinkedIn</a>
+                          <a href={`https://www.indeed.com/jobs?q=${encodeURIComponent(job.search_keywords || job.title)}${jobSearchFilters.location ? '&l=' + encodeURIComponent(jobSearchFilters.location) : ''}${jobSearchFilters.posted === '24hr' ? '&fromage=1' : jobSearchFilters.posted === '3days' ? '&fromage=3' : jobSearchFilters.posted === 'week' ? '&fromage=7' : jobSearchFilters.posted === 'month' ? '&fromage=30' : ''}`} target="_blank" rel="noreferrer">🔗 Indeed</a>
+                          <a href={`https://www.google.com/search?q=${encodeURIComponent(job.title + ' jobs' + (jobSearchFilters.location ? ' ' + jobSearchFilters.location : ''))}&ibp=htl;jobs`} target="_blank" rel="noreferrer">🔗 Google Jobs</a>
+                          <a href={`https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encodeURIComponent(job.search_keywords || job.title)}${jobSearchFilters.location ? '&locT=C&locKeyword=' + encodeURIComponent(jobSearchFilters.location) : ''}`} target="_blank" rel="noreferrer">🔗 Glassdoor</a>
                         </div>
                       </div>
                     ))}
