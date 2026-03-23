@@ -11,7 +11,9 @@ A full-stack job application tracking platform with AI-powered career coaching, 
 - **Smart Add** — Paste a job URL or description and AI automatically extracts company, role, and details
 - **Document Management** — Upload resume and cover letter PDFs per job with in-app PDF viewer
 - **Email Notifications** — Automatic email alerts on new applications and status changes, sent to the logged-in user's email
+- **Email OTP Verification** — 6-digit OTP sent to email during signup, with resend and expiry support
 - **Multi-User Support** — JWT authentication with BCrypt password hashing and user-specific data isolation
+- **Responsive Design** — Fully responsive UI optimized for desktop, tablet, and mobile devices
 
 ### AI Career Coach (Groq API — Llama 3.3 70B)
 - **Interview Prep** — Generates role-specific interview questions (technical, behavioral, system design)
@@ -34,14 +36,14 @@ A full-stack job application tracking platform with AI-powered career coaching, 
 - **Spring Security** with JWT authentication
 - **Spring Data JPA** with PostgreSQL
 - **Spring WebFlux** (WebClient for external API calls)
-- **Spring Mail** for async email notifications
+- **Spring Mail** for async email notifications and OTP verification
 - **Apache PDFBox 3.0** for PDF text extraction
 - **Groq API** (Llama 3.3 70B) for all AI features
 
 ### Frontend
 - **React 18** with functional components and hooks
 - **Axios** for API communication
-- **CSS3** with custom responsive design
+- **CSS3** with custom responsive design (desktop, tablet, mobile)
 
 ### Infrastructure
 - **PostgreSQL 17** database
@@ -51,12 +53,12 @@ A full-stack job application tracking platform with AI-powered career coaching, 
 ## Architecture
 
 ```
-React Frontend
+React Frontend (Responsive — Desktop / Tablet / Mobile)
     |
     | Axios HTTP + JWT Bearer Token
     v
 Spring Boot REST API (port 8080)
-    ├── AuthController         -> Registration, Login, JWT
+    ├── AuthController         -> Registration, Login, OTP Verification
     ├── JobApplicationController -> CRUD operations
     ├── AIController           -> AI career coach features
     ├── ResumeController       -> Document upload/download
@@ -65,7 +67,7 @@ Spring Boot REST API (port 8080)
     ├── JobApplicationService  -> Business logic + email triggers
     ├── AIService              -> Groq API integration
     ├── ResumeService          -> PDF processing with PDFBox
-    ├── EmailService           -> Async email via Gmail SMTP
+    ├── EmailService           -> Async email, OTP, notifications
     |
     ├── SecurityConfig         -> JWT filter chain
     ├── JwtUtil                -> Token generation/validation
@@ -87,7 +89,7 @@ job-tracker/
 │   └── src/
 │       ├── components/  # AuthPage, JobBoard, JobForm, AITools, AdminPage
 │       ├── App.js       # Main application with routing
-│       └── App.css      # Complete styles
+│       └── App.css      # Complete responsive styles
 ├── Dockerfile           # Multi-stage Docker build
 └── pom.xml              # Maven dependencies
 ```
@@ -97,7 +99,9 @@ job-tracker/
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/register` | Register new user (sends OTP) |
+| POST | `/api/auth/verify-otp` | Verify email with OTP |
+| POST | `/api/auth/resend-otp` | Resend OTP code |
 | POST | `/api/auth/login` | Login and get JWT token |
 
 ### Job Applications (requires JWT)
@@ -222,8 +226,10 @@ docker run -d --name jobtracker-api --network jobtracker-net \
 - **Groq API over OpenAI** — Free tier with generous rate limits, uses Llama 3.3 70B which performs comparably for this use case.
 - **Async email with @Async** — Email sending runs in a background thread so API responses are not delayed.
 - **User email passed to async service** — SecurityContext doesn't propagate to async threads, so the user email is passed directly to the email service.
+- **Email OTP verification** — New accounts require a 6-digit code sent via email, preventing fake signups and verifying email ownership.
 - **JWT stored in localStorage** — Simple approach for SPA authentication with axios default headers.
 - **Static files served from Spring Boot** — React build is copied into `src/main/resources/static/` so a single JAR serves both frontend and API.
+- **Responsive CSS with media queries** — Three breakpoints (1024px, 768px, 480px) ensure the app works on all screen sizes without a CSS framework.
 
 ## Author
 
