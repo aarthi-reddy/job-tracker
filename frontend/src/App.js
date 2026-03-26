@@ -41,10 +41,12 @@ function App() {
   }, []);
 
   const handleLogin = (data) => {
-    setUser({ email: data.email, fullName: data.fullName });
-    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-    fetchApplications();
-  };
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify({ email: data.email, fullName: data.fullName }));
+      setUser({ email: data.email, fullName: data.fullName });
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+      fetchApplications();
+    };
 
   const handleLogout = () => {
     setUser(null);
