@@ -53,7 +53,124 @@ const AITools = ({ app, onClose }) => {
     }
   };
 
-  const handleInterview
+  const handleInterview = async () => {
+      setLoading(true);
+      setResult('');
+      try {
+        const res = await axios.post('/api/ai/interview-questions', {
+          company: app.company, role: app.role, type: questionType, count: numQuestions
+        });
+        setResult(res.data.questions);
+      } catch (err) { setResult('Error generating questions.'); }
+      setLoading(false);
+    };
+
+    const handleResumeReview = async () => {
+      setLoading(true);
+      setResult('');
+      try {
+        if (sharedResumeFile && !resumeExtracted) {
+          const formData = new FormData();
+          formData.append('file', sharedResumeFile);
+          formData.append('targetRole', app.role);
+          const res = await axios.post('/api/ai/upload-resume', formData);
+          setResult(res.data.feedback);
+        } else {
+          const res = await axios.post('/api/ai/resume-feedback', { resumeText: sharedResumeText, targetRole: app.role });
+          setResult(res.data.feedback);
+        }
+      } catch (err) { setResult('Error reviewing resume.'); }
+      setLoading(false);
+    };
+
+    const handleCoverLetter = async () => {
+      setLoading(true);
+      setResult('');
+      try {
+        if (sharedResumeFile && !resumeExtracted) {
+          const formData = new FormData();
+          formData.append('file', sharedResumeFile);
+          formData.append('company', app.company);
+          formData.append('role', app.role);
+          const res = await axios.post('/api/ai/upload-resume-cover-letter', formData);
+          setResult(res.data.coverLetter);
+        } else {
+          const res = await axios.post('/api/ai/cover-letter', { resumeText: sharedResumeText, company: app.company, role: app.role });
+          setResult(res.data.coverLetter);
+        }
+      } catch (err) { setResult('Error generating cover letter.'); }
+      setLoading(false);
+    };
+
+    const handleJobMatch = async () => {
+      setLoading(true);
+      setJobMatches(null);
+      setResult('');
+      try {
+        const text = await getResumeText();
+        const res = await axios.post('/api/ai/job-match', { resumeText: text });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) setJobMatches(parsed);
+        else setResult(res.data.result);
+      } catch (err) { setResult('Error analyzing resume.'); }
+      setLoading(false);
+    };
+
+    const handleSkillGap = async () => {
+      setLoading(true);
+      setSkillGapResult(null);
+      setResult('');
+      try {
+        const text = await getResumeText();
+        const res = await axios.post('/api/ai/skill-gap', { resumeText: text, jobDescription: getJobDescription() });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) setSkillGapResult(parsed);
+        else setResult(res.data.result);
+      } catch (err) { setResult('Error analyzing skill gap.'); }
+      setLoading(false);
+    };
+
+    const handleResumeScore = async () => {
+      setLoading(true);
+      setScoreResult(null);
+      setResult('');
+      try {
+        const text = await getResumeText();
+        const res = await axios.post('/api/ai/resume-score', { resumeText: text });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) setScoreResult(parsed);
+        else setResult(res.data.result);
+      } catch (err) { setResult('Error scoring resume.'); }
+      setLoading(false);
+    };
+
+    const handleAtsScore = async () => {
+      setLoading(true);
+      setAtsResult(null);
+      setResult('');
+      try {
+        const text = await getResumeText();
+        const res = await axios.post('/api/ai/ats-score', { resumeText: text, jobDescription: getJobDescription() });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) setAtsResult(parsed);
+        else setResult(res.data.result);
+      } catch (err) { setResult('Error analyzing ATS score.'); }
+      setLoading(false);
+    };
+
+    const handleTailorResume = async () => {
+      setLoading(true);
+      setTailorResult(null);
+      setResult('');
+      try {
+        const text = await getResumeText();
+        const res = await axios.post('/api/ai/tailor-resume', { resumeText: text, jobDescription: getJobDescription() });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) setTailorResult(parsed);
+        else setResult(res.data.result);
+      } catch (err) { setResult('Error tailoring resume.'); }
+      setLoading(false);
+    };
 
   const tabs = [
       { id: 'interview', label: '🎯 Interview' },

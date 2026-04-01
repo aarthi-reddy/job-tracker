@@ -188,6 +188,8 @@ function App() {
     setSmartLoading(false);
   };
 
+
+
   if (!user) {
     return <AuthPage onLogin={handleLogin} />;
   }
