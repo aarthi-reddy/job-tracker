@@ -33,6 +33,18 @@ const AITools = ({ app, onClose }) => {
   const [scoreFile, setScoreFile] = useState(null);
   const [scoreResult, setScoreResult] = useState(null);
 
+  // ATS Score
+    const [atsResume, setAtsResume] = useState('');
+    const [atsJob, setAtsJob] = useState('');
+    const [atsFile, setAtsFile] = useState(null);
+    const [atsResult, setAtsResult] = useState(null);
+
+    // Tailor Resume
+    const [tailorResume, setTailorResume] = useState('');
+    const [tailorJob, setTailorJob] = useState('');
+    const [tailorFile, setTailorFile] = useState(null);
+    const [tailorResult, setTailorResult] = useState(null);
+
   if (!app) return null;
 
   const extractPdfText = async (file) => {
@@ -180,14 +192,74 @@ const AITools = ({ app, onClose }) => {
     setLoading(false);
   };
 
+  const handleAtsScore = async () => {
+      setLoading(true);
+      setAtsResult(null);
+      setResult('');
+      try {
+        let text = atsResume;
+        if (atsFile) {
+          const formData = new FormData();
+          formData.append('file', atsFile);
+          formData.append('targetRole', app.role);
+          const uploadRes = await axios.post('/api/ai/upload-resume', formData);
+          text = uploadRes.data.text || uploadRes.data.feedback;
+        }
+        const res = await axios.post('/api/ai/ats-score', {
+          resumeText: text,
+          jobDescription: atsJob
+        });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) {
+          setAtsResult(parsed);
+        } else {
+          setResult(res.data.result);
+        }
+      } catch (err) {
+        setResult('Error analyzing ATS score.');
+      }
+      setLoading(false);
+    };
+
+    const handleTailorResume = async () => {
+      setLoading(true);
+      setTailorResult(null);
+      setResult('');
+      try {
+        let text = tailorResume;
+        if (tailorFile) {
+          const formData = new FormData();
+          formData.append('file', tailorFile);
+          formData.append('targetRole', app.role);
+          const uploadRes = await axios.post('/api/ai/upload-resume', formData);
+          text = uploadRes.data.text || uploadRes.data.feedback;
+        }
+        const res = await axios.post('/api/ai/tailor-resume', {
+          resumeText: text,
+          jobDescription: tailorJob
+        });
+        const parsed = parseJSON(res.data.result);
+        if (parsed) {
+          setTailorResult(parsed);
+        } else {
+          setResult(res.data.result);
+        }
+      } catch (err) {
+        setResult('Error tailoring resume.');
+      }
+      setLoading(false);
+    };
+
   const tabs = [
-    { id: 'interview', label: '🎯 Interview' },
-    { id: 'resume', label: '📝 Resume Review' },
-    { id: 'cover', label: '✉️ Cover Letter' },
-    { id: 'jobmatch', label: '🔍 Job Match' },
-    { id: 'skillgap', label: '📊 Skill Gap' },
-    { id: 'score', label: '💯 Resume Score' }
-  ];
+      { id: 'interview', label: '🎯 Interview' },
+      { id: 'resume', label: '📝 Resume Review' },
+      { id: 'cover', label: '✉️ Cover Letter' },
+      { id: 'jobmatch', label: '🔍 Job Match' },
+      { id: 'skillgap', label: '📊 Skill Gap' },
+      { id: 'score', label: '💯 Resume Score' },
+      { id: 'ats', label: '🔎 ATS Score' },
+      { id: 'tailor', label: '✂️ Tailor Resume' }
+    ];
 
   return (
     <div className="ai-modal-overlay" onClick={onClose}>
@@ -202,7 +274,7 @@ const AITools = ({ app, onClose }) => {
             <button
               key={tab.id}
               className={`ai-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => { setActiveTab(tab.id); setResult(''); setJobMatches(null); setSkillGapResult(null); setScoreResult(null); }}
+              onClick={() => { setActiveTab(tab.id); setResult(''); setJobMatches(null); setSkillGapResult(null); setScoreResult(null); setAtsResult(null); setTailorResult(null); }}
             >
               {tab.label}
             </button>
@@ -355,6 +427,127 @@ const AITools = ({ app, onClose }) => {
               )}
             </div>
           )}
+
+          {activeTab === 'ats' && (
+                      <div>
+                        <input type="file" accept=".pdf" onChange={e => setAtsFile(e.target.files[0])} className="ai-file-input" />
+                        <p className="ai-or">— or paste your resume text —</p>
+                        <textarea value={atsResume} onChange={e => setAtsResume(e.target.value)} placeholder="Paste resume text here..." rows={4} className="ai-textarea" />
+                        <textarea value={atsJob} onChange={e => setAtsJob(e.target.value)} placeholder="Paste the job description here..." rows={4} className="ai-textarea" style={{ marginTop: '10px' }} />
+                        <button onClick={handleAtsScore} disabled={loading || (!atsFile && !atsResume) || !atsJob} className="ai-btn">
+                          {loading ? 'Scanning...' : '🔎 Check ATS Score'}
+                        </button>
+                        {atsResult && (
+                          <div className="ats-results">
+                            <div className="ats-score-display">
+                              <div className="ats-score-circle" style={{ '--ats-color': atsResult.ats_score >= 80 ? '#22c55e' : atsResult.ats_score >= 60 ? '#f59e0b' : '#ef4444' }}>
+                                <span className="ats-score-num">{atsResult.ats_score}</span>
+                                <span className="ats-score-label">ATS Score</span>
+                              </div>
+                              <p className="ats-summary">{atsResult.summary}</p>
+                            </div>
+                            <div className="ats-keywords">
+                              <div className="ats-keyword-col">
+                                <h4>Matched Keywords</h4>
+                                <div className="ats-tags">
+                                  {atsResult.matched_keywords?.map((k, i) => <span key={i} className="ats-tag matched">{k}</span>)}
+                                </div>
+                              </div>
+                              <div className="ats-keyword-col">
+                                <h4>Missing Keywords</h4>
+                                <div className="ats-tags">
+                                  {atsResult.missing_keywords?.map((k, i) => <span key={i} className="ats-tag missing">{k}</span>)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="ats-sections">
+                              <h4>Section Breakdown</h4>
+                              {atsResult.section_scores?.map((sec, i) => (
+                                <div key={i} className="ats-section-item">
+                                  <div className="ats-section-header">
+                                    <span>{sec.section}</span>
+                                    <span className="ats-section-score" style={{ color: sec.score >= 80 ? '#22c55e' : sec.score >= 60 ? '#f59e0b' : '#ef4444' }}>{sec.score}%</span>
+                                  </div>
+                                  <div className="ats-bar-track"><div className="ats-bar-fill" style={{ width: `${sec.score}%`, backgroundColor: sec.score >= 80 ? '#22c55e' : sec.score >= 60 ? '#f59e0b' : '#ef4444' }} /></div>
+                                  <p className="ats-section-feedback">{sec.feedback}</p>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="ats-improvements">
+                              <h4>How to Improve</h4>
+                              {atsResult.improvements?.map((tip, i) => <p key={i}>• {tip}</p>)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === 'tailor' && (
+                      <div>
+                        <input type="file" accept=".pdf" onChange={e => setTailorFile(e.target.files[0])} className="ai-file-input" />
+                        <p className="ai-or">— or paste your resume text —</p>
+                        <textarea value={tailorResume} onChange={e => setTailorResume(e.target.value)} placeholder="Paste resume text here..." rows={4} className="ai-textarea" />
+                        <textarea value={tailorJob} onChange={e => setTailorJob(e.target.value)} placeholder="Paste the job description you want to tailor for..." rows={4} className="ai-textarea" style={{ marginTop: '10px' }} />
+                        <button onClick={handleTailorResume} disabled={loading || (!tailorFile && !tailorResume) || !tailorJob} className="ai-btn">
+                          {loading ? 'Tailoring...' : '✂️ Tailor My Resume'}
+                        </button>
+                        {tailorResult && (
+                          <div className="tailor-results">
+                            <div className="tailor-score-compare">
+                              <div className="tailor-before">
+                                <span className="tailor-score-num" style={{ color: '#ef4444' }}>{tailorResult.before_score}</span>
+                                <span>Before</span>
+                              </div>
+                              <div className="tailor-arrow">→</div>
+                              <div className="tailor-after">
+                                <span className="tailor-score-num" style={{ color: '#22c55e' }}>{tailorResult.after_score}</span>
+                                <span>After</span>
+                              </div>
+                            </div>
+
+                            <div className="tailor-section">
+                              <h4>Tailored Professional Summary</h4>
+                              <div className="tailor-box">{tailorResult.tailored_summary}</div>
+                            </div>
+
+                            <div className="tailor-section">
+                              <h4>Tailored Experience Bullets</h4>
+                              {tailorResult.tailored_experience?.map((item, i) => (
+                                <div key={i} className="tailor-compare">
+                                  <div className="tailor-original">
+                                    <span className="tailor-label">Original</span>
+                                    <p>{item.original}</p>
+                                  </div>
+                                  <div className="tailor-tailored">
+                                    <span className="tailor-label">Tailored</span>
+                                    <p>{item.tailored}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="tailor-section">
+                              <h4>Keywords Added</h4>
+                              <div className="tailor-keywords">
+                                {tailorResult.keywords_added?.map((k, i) => <span key={i} className="ats-tag matched">{k}</span>)}
+                              </div>
+                            </div>
+
+                            <div className="tailor-section">
+                              <h4>Recommended Skills Section</h4>
+                              <div className="tailor-keywords">
+                                {tailorResult.tailored_skills?.map((s, i) => <span key={i} className="skill-tag green">{s}</span>)}
+                              </div>
+                            </div>
+
+                            <div className="tailor-section">
+                              <h4>Additional Tips</h4>
+                              {tailorResult.tips?.map((tip, i) => <p key={i}>• {tip}</p>)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
           {result && !jobMatches && !skillGapResult && !scoreResult && (
             <div className="ai-result">

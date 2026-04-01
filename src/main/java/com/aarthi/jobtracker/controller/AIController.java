@@ -127,4 +127,46 @@ public class AIController {
         String result = aiService.askGroq(prompt);
         return ResponseEntity.ok(Map.of("result", result));
     }
+
+    @PostMapping("/ats-score")
+    public ResponseEntity<?> getAtsScore(@RequestBody Map<String, String> request) {
+        String resumeText = request.get("resumeText");
+        String jobDescription = request.get("jobDescription");
+        String prompt = "You are an ATS (Applicant Tracking System) scanner. Analyze this resume against the job description. "
+                + "Score how well the resume matches the job requirements. "
+                + "Respond ONLY in this JSON format, no other text:\n"
+                + "{\"ats_score\": 72, "
+                + "\"matched_keywords\": [\"Java\", \"Spring Boot\", \"REST API\"], "
+                + "\"missing_keywords\": [\"Kubernetes\", \"CI/CD\", \"Terraform\"], "
+                + "\"section_scores\": ["
+                + "{\"section\": \"Technical Skills\", \"score\": 85, \"feedback\": \"...\"}, "
+                + "{\"section\": \"Work Experience\", \"score\": 70, \"feedback\": \"...\"}, "
+                + "{\"section\": \"Projects\", \"score\": 65, \"feedback\": \"...\"}, "
+                + "{\"section\": \"Education\", \"score\": 90, \"feedback\": \"...\"}], "
+                + "\"improvements\": [\"Add Kubernetes experience\", \"Quantify achievements with metrics\"], "
+                + "\"summary\": \"Good technical match but missing cloud-native keywords\"}\n\n"
+                + "Resume:\n" + resumeText + "\n\nJob Description:\n" + jobDescription;
+        String result = aiService.askGroq(prompt);
+        return ResponseEntity.ok(Map.of("result", result));
+    }
+
+    @PostMapping("/tailor-resume")
+    public ResponseEntity<?> tailorResume(@RequestBody Map<String, String> request) {
+        String resumeText = request.get("resumeText");
+        String jobDescription = request.get("jobDescription");
+        String prompt = "You are an expert resume writer. Rewrite this resume to be perfectly tailored for the given job description. "
+                + "Keep all real experiences but reword bullet points to match the job requirements and include relevant keywords. "
+                + "Respond ONLY in this JSON format, no other text:\n"
+                + "{\"tailored_summary\": \"Rewritten professional summary...\", "
+                + "\"tailored_experience\": ["
+                + "{\"original\": \"Original bullet point\", \"tailored\": \"Rewritten bullet point with job keywords\"}], "
+                + "\"tailored_skills\": [\"Skill 1\", \"Skill 2\"], "
+                + "\"keywords_added\": [\"keyword1\", \"keyword2\"], "
+                + "\"before_score\": 62, "
+                + "\"after_score\": 91, "
+                + "\"tips\": [\"tip1\", \"tip2\"]}\n\n"
+                + "Resume:\n" + resumeText + "\n\nJob Description:\n" + jobDescription;
+        String result = aiService.askGroq(prompt);
+        return ResponseEntity.ok(Map.of("result", result));
+    }
 }
